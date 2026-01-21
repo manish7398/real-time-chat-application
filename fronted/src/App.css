@@ -1,0 +1,451 @@
+/* Base */
+body {
+  margin: 0;
+  font-family: "Inter", "Segoe UI", sans-serif;
+  background: linear-gradient(135deg, #eef2ff, #f8fafc);
+}
+
+/* Header */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #1e40af;
+  color: white;
+  padding: 14px 26px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header h2 {
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+/* Bell */
+.bell {
+  position: relative;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.badge {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+  background: #ef4444;
+  color: white;
+  font-size: 11px;
+  padding: 3px 7px;
+  border-radius: 999px;
+}
+
+/* Dropdown */
+.dropdown {
+  position: absolute;
+  right: 20px;
+  top: 65px;
+  width: 320px;
+  background: white;
+  color: black;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  animation: fadeIn 0.2s ease;
+}
+
+.dropdown h4 {
+  margin: 0;
+  padding: 12px 16px;
+  background: #f1f5f9;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dropdown-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.dropdown-item.unread {
+  background: #eef2ff;
+  font-weight: 600;
+}
+
+.dropdown-item.read {
+  color: #6b7280;
+}
+
+.dropdown-item span {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* Logout */
+.logout-btn {
+  background: white;
+  color: #1e40af;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background: #e0e7ff;
+}
+
+/* Content */
+.content {
+  padding: 30px;
+}
+
+.content h3 {
+  margin-bottom: 20px;
+}
+
+/* Notification cards */
+.notification-list {
+  display: grid;
+  gap: 16px;
+}
+
+.notification-card {
+  background: white;
+  padding: 16px 20px;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  transition: all 0.25s ease;
+}
+
+.notification-card:hover {
+  transform: translateY(-4px);
+}
+
+.message {
+  margin: 0;
+  font-weight: 500;
+}
+
+.time {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* Empty */
+.empty {
+  padding: 20px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.empty-big {
+  margin-top: 60px;
+  text-align: center;
+  color: #64748b;
+}
+
+.empty-big p {
+  font-size: 48px;
+  margin: 0;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* ================= LOGIN PAGE ================= */
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    135deg,
+    #1e3a8a,
+    #4f46e5,
+    #7c3aed
+  );
+}
+
+.login-card {
+  width: 380px;
+  padding: 35px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(15px);
+  border-radius: 20px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+  color: white;
+  animation: slideUp 0.6s ease;
+}
+
+.login-card h2 {
+  margin: 0;
+  font-size: 28px;
+  text-align: center;
+}
+
+
+.subtitle {
+  text-align: center;
+  margin-bottom: 30px;
+  opacity: 0.9;
+}
+
+/* Input group */
+.input-group {
+  position: relative;
+  margin-bottom: 22px;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 14px 12px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 10px;
+  outline: none;
+  color: white;
+  font-size: 15px;
+}
+
+.input-group label {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  pointer-events: none;
+  transition: 0.3s;
+}
+
+.input-group input:focus + label,
+.input-group input:valid + label {
+  top: -8px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 0 6px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+
+/* Show/Hide */
+.toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+/* Button */
+.login-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px;
+  background: #22c55e;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  color: black;
+  transition: 0.3s;
+}
+
+.login-btn:hover {
+  background: #16a34a;
+}
+
+.login-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Error */
+.error {
+  color: #fecaca;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+/* Footer */
+.footer-text {
+  margin-top: 25px;
+  text-align: center;
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+/* Animation */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* ================= DASHBOARD ================= */
+
+.dash-page {
+  min-height: 100vh;
+  background: linear-gradient(
+    135deg,
+    #0f172a,
+    #1e3a8a,
+    #312e81
+  );
+  color: white;
+}
+
+/* Header */
+.dash-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 16px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.dash-header h2 {
+  margin: 0;
+  font-size: 26px;
+  letter-spacing: 1px;
+}
+
+.dash-right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+/* Bell */
+.dash-bell {
+  position: relative;
+  font-size: 22px;
+}
+
+.dash-badge {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+  background: #ef4444;
+  color: white;
+  font-size: 11px;
+  padding: 3px 7px;
+  border-radius: 999px;
+}
+
+/* Logout */
+.dash-logout {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  border: none;
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+  color: black;
+}
+
+.dash-logout:hover {
+  opacity: 0.9;
+}
+
+/* Content */
+.dash-content {
+  padding: 40px;
+}
+
+.dash-title {
+  margin-bottom: 30px;
+  font-size: 22px;
+  letter-spacing: 0.5px;
+}
+
+/* Notification grid */
+.notify-grid {
+  display: grid;
+  gap: 20px;
+}
+
+/* Card */
+.notify-card {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 20px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+  animation: fadeUp 0.5s ease;
+  transition: transform 0.3s;
+}
+
+.notify-card:hover {
+  transform: translateY(-4px) scale(1.01);
+}
+
+/* Icon */
+.notify-icon {
+  font-size: 28px;
+  background: linear-gradient(135deg, #60a5fa, #22d3ee);
+  padding: 14px;
+  border-radius: 14px;
+}
+
+/* Text */
+.notify-text p {
+  margin: 0;
+  font-weight: 600;
+}
+
+.notify-text span {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  opacity: 0.75;
+}
+
+/* Animation */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.notify-card.unread {
+  border-left: 5px solid #22d3ee;
+}
+
+.notify-card.read {
+  opacity: 0.6;
+}
