@@ -1,45 +1,68 @@
 import { useEffect, useState } from "react";
-import socket, { joinUserRoom } from "./socket";
-import { fetchNotifications, markAsRead } from "./api";
-import "./App.css";
+import socket, {
+  joinUserRoom,
+  sendChatMessage,
+} from "./socket";
 import { jwtDecode } from "jwt-decode";
+import "./App.css";
 
 function Dashboard({ setToken }) {
-  const [notifications, setNotifications] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [text, setText] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState([]);
 
-  // 🔐 get userId from token
+  const token = localStorage.getItem("token");
+  const decoded = token ? jwtDecode(token) : null;
+  const userId = decoded?.id;
+
+  // demo receiver (later dynamic)
+  const receiverId = "demo-receiver-id";
+
+  // join room
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      const decoded = jwtDecode(token);
-      joinUserRoom(decoded.id);
+    if (userId) joinUserRoom(userId);
+  }, [userId]);
+
+  // socket listeners
+  useEffect(() => {
+    socket.on("receiveMessage", (data) => {
+      setMessages((prev) => [...prev, data]);
+      setIsTyping(false);
+    });
+
+    socket.on("typing", () => setIsTyping(true));
+    socket.on("stopTyping", () => setIsTyping(false));
+
+    socket.on("onlineUsers", (users) => {
+      setOnlineUsers(users);
+    });
+
+    return () => {
+      socket.off("receiveMessage");
+      socket.off("typing");
+      socket.off("stopTyping");
+      socket.off("onlineUsers");
+    };
+  }, []);
+
+  const handleTyping = (value) => {
+    setText(value);
+    socket.emit("typing", { senderId: userId, receiverId });
+    if (!value) {
+      socket.emit("stopTyping", { senderId: userId, receiverId });
     }
-  }, []);
+  };
 
-  // load notifications
-  useEffect(() => {
-    fetchNotifications().then((res) => {
-      setNotifications(res.data);
-    });
-  }, []);
+  const sendMessage = () => {
+    if (!text.trim()) return;
 
-  // realtime listener
-  useEffect(() => {
-    socket.on("notification", (data) => {
-      setNotifications((prev) => [data, ...prev]);
-    });
+    const msg = { senderId: userId, receiverId, message: text };
+    sendChatMessage(msg);
+    socket.emit("stopTyping", { senderId: userId, receiverId });
 
-    return () => socket.off("notification");
-  }, []);
-
-  // mark read
-  const handleRead = async (id) => {
-    await markAsRead(id);
-    setNotifications((prev) =>
-      prev.map((n) =>
-        n._id === id ? { ...n, isRead: true } : n
-      )
-    );
+    setMessages((prev) => [...prev, msg]);
+    setText("");
   };
 
   const logout = () => {
@@ -47,54 +70,48 @@ function Dashboard({ setToken }) {
     setToken(null);
   };
 
-  const unreadCount = notifications.filter(
-    (n) => !n.isRead
-  ).length;
+  const receiverOnline = onlineUsers.includes(receiverId);
 
   return (
     <div className="dash-page">
-      {/* Header */}
       <div className="dash-header">
-        <h2>NotifyX</h2>
-
-        <div className="dash-right">
-          <div className="dash-bell">
-            🔔
-            {unreadCount > 0 && (
-              <span className="dash-badge">
-                {unreadCount}
-              </span>
-            )}
-          </div>
-
-          <button className="dash-logout" onClick={logout}>
-            Logout
-          </button>
-        </div>
+        <h2>
+          NotifyX Chat
+          <span
+            className={`status-dot ${
+              receiverOnline ? "online" : "offline"
+            }`}
+          />
+        </h2>
+        <button onClick={logout}>Logout</button>
       </div>
 
-      {/* Notifications */}
-      <div className="dash-content">
-        <h3>Notifications</h3>
-
-        <div className="notify-grid">
-          {notifications.map((n) => (
+      <div className="chat-container">
+        <div className="chat-messages">
+          {messages.map((m, i) => (
             <div
-              key={n._id}
-              className={`notify-card ${
-                n.isRead ? "read" : "unread"
+              key={i}
+              className={`chat-bubble ${
+                m.senderId === userId
+                  ? "chat-me"
+                  : "chat-other"
               }`}
-              onClick={() => handleRead(n._id)}
             >
-              <div className="notify-icon">🔔</div>
-              <div className="notify-text">
-                <p>{n.message}</p>
-                <span>
-                  {new Date(n.createdAt).toLocaleString()}
-                </span>
-              </div>
+              {m.message}
             </div>
           ))}
+          {isTyping && (
+            <div className="typing-indicator">typing…</div>
+          )}
+        </div>
+
+        <div className="chat-input">
+          <input
+            value={text}
+            onChange={(e) => handleTyping(e.target.value)}
+            placeholder="Type a message..."
+          />
+          <button onClick={sendMessage}>Send</button>
         </div>
       </div>
     </div>

@@ -8,4 +8,9 @@ export const joinUserRoom = (userId) => {
   socket.emit("joinRoom", userId);
 };
 
+// ✅ NEW chat helpers
+export const sendChatMessage = (payload) => {
+  socket.emit("sendMessage", payload);
+};
+
 export default socket;
