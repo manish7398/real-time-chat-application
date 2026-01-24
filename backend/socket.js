@@ -18,6 +18,15 @@ const initSocket = (io) => {
       io.emit("onlineUsers", Array.from(onlineUsers.keys()));
       console.log(`👤 User online: ${userId}`);
     });
+    // message delivered
+       socket.on("messageDelivered", ({ senderId }) => {
+       io.to(senderId).emit("messageDelivered");
+     });
+
+     // message seen
+      socket.on("messageSeen", ({ senderId }) => {
+      io.to(senderId).emit("messageSeen");
+       });
 
     // ===============================
     // realtime chat message
