@@ -25,7 +25,7 @@ router.get("/notifications", authMiddleware, async (req, res) => {
   res.json(notifications);
 });
 
-// Mark as read
+
 router.patch("/notifications/:id/read", authMiddleware, async (req, res) => {
   await Notification.findByIdAndUpdate(req.params.id, {
     isRead: true,

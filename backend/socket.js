@@ -68,9 +68,9 @@ const initSocket = (io) => {
       io.to(receiverId).emit("stopTyping", { senderId });
     });
 
-    // ===============================
+    
     // disconnect → mark offline
-    // ===============================
+    
     socket.on("disconnect", () => {
       for (const [userId, sockId] of onlineUsers.entries()) {
         if (sockId === socket.id) {
@@ -89,9 +89,8 @@ const initSocket = (io) => {
   });
 };
 
-// ===============================
 // existing helper (UNCHANGED)
-// ===============================
+
 const sendNotification = (userId, notification) => {
   if (ioInstance) {
     ioInstance.to(userId).emit("notification", notification);
