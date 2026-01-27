@@ -50,12 +50,10 @@ function Dashboard({ setToken }) {
   // socket listeners
   useEffect(() => {
     socket.on("receiveMessage", (data) => {
-      // if message from currently open chat
       if (data.senderId === receiverId) {
         setMessages((prev) => [...prev, data]);
         setIsTyping(false);
       } else {
-        // 🔴 increment unread for that user
         setUnread((prev) => ({
           ...prev,
           [data.senderId]:
@@ -95,6 +93,7 @@ function Dashboard({ setToken }) {
 
   const handleTyping = (value) => {
     setText(value);
+
     socket.emit("typing", {
       senderId: userId,
       receiverId,
@@ -118,6 +117,7 @@ function Dashboard({ setToken }) {
     };
 
     sendChatMessage(msg);
+
     socket.emit("stopTyping", {
       senderId: userId,
       receiverId,
@@ -167,7 +167,6 @@ function Dashboard({ setToken }) {
                 setMessages([]);
                 setSeen(false);
 
-                // reset unread
                 setUnread((prev) => ({
                   ...prev,
                   [user.id]: 0,

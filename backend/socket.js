@@ -1,6 +1,6 @@
 let ioInstance;
 
-// online users map
+// online users map (userId -> socketId)
 const onlineUsers = new Map();
 
 const initSocket = (io) => {
@@ -15,18 +15,26 @@ const initSocket = (io) => {
     socket.on("joinRoom", (userId) => {
       socket.join(userId);
       onlineUsers.set(userId, socket.id);
+
+      // send updated online users list
       io.emit("onlineUsers", Array.from(onlineUsers.keys()));
+
       console.log(`👤 User online: ${userId}`);
     });
-    // message delivered
-       socket.on("messageDelivered", ({ senderId }) => {
-       io.to(senderId).emit("messageDelivered");
-     });
 
-     // message seen
-      socket.on("messageSeen", ({ senderId }) => {
+    // ===============================
+    // message delivered
+    // ===============================
+    socket.on("messageDelivered", ({ senderId }) => {
+      io.to(senderId).emit("messageDelivered");
+    });
+
+    // ===============================
+    // message seen
+    // ===============================
+    socket.on("messageSeen", ({ senderId }) => {
       io.to(senderId).emit("messageSeen");
-       });
+    });
 
     // ===============================
     // realtime chat message
@@ -38,8 +46,10 @@ const initSocket = (io) => {
         createdAt: new Date(),
       };
 
+      // send message
       io.to(receiverId).emit("receiveMessage", chatPayload);
 
+      // send notification
       io.to(receiverId).emit("notification", {
         message: `💬 New message: ${message}`,
         isRead: false,
@@ -65,17 +75,23 @@ const initSocket = (io) => {
       for (const [userId, sockId] of onlineUsers.entries()) {
         if (sockId === socket.id) {
           onlineUsers.delete(userId);
+
+          // broadcast updated online list
           io.emit("onlineUsers", Array.from(onlineUsers.keys()));
+
           console.log(`🔴 User offline: ${userId}`);
           break;
         }
       }
+
       console.log("❌ Socket disconnected:", socket.id);
     });
   });
 };
 
-// existing helper (unchanged)
+// ===============================
+// existing helper (UNCHANGED)
+// ===============================
 const sendNotification = (userId, notification) => {
   if (ioInstance) {
     ioInstance.to(userId).emit("notification", notification);
