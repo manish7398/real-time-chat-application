@@ -1,0 +1,7 @@
+mongodb+srv://manish:manishdb@cluster0.g96wy42.mongodb.net/realtimedb?retryWrites=true&w=majority&appName=Cluster0
+
+dbname: realtimedb
+manish - username
+Manish123 - password
+
+
