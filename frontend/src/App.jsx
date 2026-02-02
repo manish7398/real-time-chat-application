@@ -1,29 +1,32 @@
 import { useEffect, useState } from "react";
 import Login from "./Login";
+import Register from "./Register";
 import Dashboard from "./Dashboard";
 
 function App() {
   const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [showRegister, setShowRegister] =
+    useState(false);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("token");
-
-    if (storedToken) {
-      setToken(storedToken);
-    }
-
-    setLoading(false);
+    const t = localStorage.getItem("token");
+    if (t) setToken(t);
   }, []);
 
-  if (loading) {
-    return <p>Loading...</p>;
+  if (token) {
+    return <Dashboard setToken={setToken} />;
   }
 
-  return token ? (
-    <Dashboard setToken={setToken} />
+  return showRegister ? (
+    <Register
+      setToken={setToken}
+      setShowRegister={setShowRegister}
+    />
   ) : (
-    <Login setToken={setToken} />
+    <Login
+      setToken={setToken}
+      setShowRegister={setShowRegister}
+    />
   );
 }
 

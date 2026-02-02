@@ -3,262 +3,234 @@ import socket, {
   joinUserRoom,
   sendChatMessage,
 } from "./socket";
+import API from "./api";
 import { jwtDecode } from "jwt-decode";
 import "./App.css";
 
-const chatUsers = [
-  { id: "u1", name: "Rahul" },
-  { id: "u2", name: "Amit" },
-  { id: "u3", name: "Neha" },
-];
-
 function Dashboard({ setToken }) {
+  const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [seen, setSeen] = useState(false);
   const [text, setText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState([]);
-  const [selectedChat, setSelectedChat] = useState(chatUsers[0]);
-
-  // 🔴 unread count per user
-  const [unread, setUnread] = useState({
-    u1: 0,
-    u2: 0,
-    u3: 0,
-  });
 
   const messagesEndRef = useRef(null);
 
   const token = localStorage.getItem("token");
-  const decoded = token ? jwtDecode(token) : null;
-  const userId = decoded?.id;
+  const decoded = jwtDecode(token);
+  const userId = decoded.id;
 
-  const receiverId = selectedChat.id;
-
-  // join own room
+  // ======================
+  // Fetch users
+  // ======================
   useEffect(() => {
-    if (userId) joinUserRoom(userId);
+    const fetchUsers = async () => {
+      const res = await API.get("/users");
+      setUsers(res.data);
+      if (res.data[0]) {
+        setSelectedUser(res.data[0]);
+        loadChatHistory(res.data[0]._id);
+      }
+    };
+    fetchUsers();
+  }, []);
+
+  // ======================
+  // Join socket
+  // ======================
+  useEffect(() => {
+    joinUserRoom(userId);
   }, [userId]);
 
-  // auto scroll
+  // ======================
+  // Load history
+  // ======================
+  const loadChatHistory = async (otherUserId) => {
+    const res = await API.get(`/messages/${otherUserId}`);
+    setMessages(res.data);
+
+    // 🔵 mark unseen messages as seen
+    res.data.forEach((m) => {
+      if (
+        m.receiverId === userId &&
+        m.status !== "seen"
+      ) {
+        socket.emit("messageSeen", {
+          messageId: m._id,
+          senderId: m.senderId,
+        });
+      }
+    });
+  };
+
+  // ======================
+  // Auto scroll
+  // ======================
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
       behavior: "smooth",
     });
-  }, [messages, isTyping]);
+  }, [messages]);
 
-  // socket listeners
+  // ======================
+  // Socket listeners
+  // ======================
   useEffect(() => {
-    socket.on("receiveMessage", (data) => {
-      if (data.senderId === receiverId) {
-        setMessages((prev) => [...prev, data]);
-        setIsTyping(false);
-      } else {
-        setUnread((prev) => ({
-          ...prev,
-          [data.senderId]:
-            (prev[data.senderId] || 0) + 1,
-        }));
-      }
+    socket.on("receiveMessage", (msg) => {
+      if (msg.senderId === selectedUser?._id) {
+        setMessages((prev) => [...prev, msg]);
 
-      socket.emit("messageDelivered", {
-        senderId: data.senderId,
-      });
+        // mark seen immediately
+        socket.emit("messageSeen", {
+          messageId: msg._id,
+          senderId: msg.senderId,
+        });
+      }
+    });
+
+    socket.on("messageDelivered", ({ messageId }) => {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m._id === messageId
+            ? { ...m, status: "delivered" }
+            : m
+        )
+      );
+    });
+
+    socket.on("messageSeen", ({ messageId }) => {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m._id === messageId
+            ? { ...m, status: "seen" }
+            : m
+        )
+      );
     });
 
     socket.on("typing", () => setIsTyping(true));
     socket.on("stopTyping", () => setIsTyping(false));
 
-    socket.on("onlineUsers", (users) => {
-      setOnlineUsers(users);
-    });
+    socket.on("onlineUsers", (users) =>
+      setOnlineUsers(users)
+    );
 
-    socket.on("messageDelivered", () => {
-      setSeen(false);
-    });
+    return () => socket.off();
+  }, [selectedUser]);
 
-    socket.on("messageSeen", () => {
-      setSeen(true);
-    });
-
-    return () => {
-      socket.off("receiveMessage");
-      socket.off("typing");
-      socket.off("stopTyping");
-      socket.off("onlineUsers");
-      socket.off("messageDelivered");
-      socket.off("messageSeen");
-    };
-  }, [receiverId]);
-
-  const handleTyping = (value) => {
-    setText(value);
-
-    socket.emit("typing", {
-      senderId: userId,
-      receiverId,
-    });
-
-    if (!value) {
-      socket.emit("stopTyping", {
-        senderId: userId,
-        receiverId,
-      });
-    }
-  };
-
+  // ======================
+  // Send message
+  // ======================
   const sendMessage = () => {
-    if (!text.trim()) return;
+    if (!text.trim() || !selectedUser) return;
 
     const msg = {
       senderId: userId,
-      receiverId,
+      receiverId: selectedUser._id,
       message: text,
     };
 
     sendChatMessage(msg);
-
-    socket.emit("stopTyping", {
-      senderId: userId,
-      receiverId,
-    });
-
-    setMessages((prev) => [...prev, msg]);
+    setMessages((prev) => [
+      ...prev,
+      { ...msg, status: "sent" },
+    ]);
     setText("");
-    setSeen(false);
   };
 
+  // ======================
+  // Logout
+  // ======================
   const logout = () => {
     localStorage.removeItem("token");
     setToken(null);
   };
 
-  const receiverOnline = onlineUsers.includes(receiverId);
-
   return (
     <div className="dash-page">
-      {/* HEADER */}
       <div className="dash-header">
-        <h2>
-          NotifyX Chat — {selectedChat.name}
-          <span
-            className={`status-dot ${
-              receiverOnline ? "online" : "offline"
-            }`}
-          />
-        </h2>
+        <h2>NotifyX Chat</h2>
         <button onClick={logout}>Logout</button>
       </div>
 
-      {/* CHAT LAYOUT */}
       <div className="chat-layout">
-        {/* LEFT CHAT LIST */}
+        {/* USERS */}
         <div className="chat-list">
-          {chatUsers.map((user) => (
+          {users.map((u) => (
             <div
-              key={user.id}
+              key={u._id}
               className={`chat-item ${
-                selectedChat.id === user.id
+                selectedUser?._id === u._id
                   ? "active"
                   : ""
               }`}
               onClick={() => {
-                setSelectedChat(user);
-                setMessages([]);
-                setSeen(false);
-
-                setUnread((prev) => ({
-                  ...prev,
-                  [user.id]: 0,
-                }));
-
-                socket.emit("messageSeen", {
-                  senderId: user.id,
-                });
+                setSelectedUser(u);
+                loadChatHistory(u._id);
               }}
             >
-              <div className="chat-name">
-                {user.name}
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <span className="chat-last">
-                  Click to chat
-                </span>
-
-                {unread[user.id] > 0 && (
-                  <span
-                    style={{
-                      background: "red",
-                      color: "white",
-                      borderRadius: "50%",
-                      padding: "2px 8px",
-                      fontSize: 12,
-                    }}
-                  >
-                    {unread[user.id]}
-                  </span>
-                )}
-              </div>
+              <div className="chat-name">{u.name}</div>
+              <span
+                className={`status-dot ${
+                  onlineUsers.includes(u._id)
+                    ? "online"
+                    : "offline"
+                }`}
+              />
             </div>
           ))}
         </div>
 
-        {/* RIGHT CHAT WINDOW */}
+        {/* CHAT */}
         <div className="chat-window">
-          <div className="chat-container">
-            <div className="chat-messages">
-              {messages.map((m, i) => (
-                <div
-                  key={i}
-                  className={`chat-bubble ${
-                    m.senderId === userId
-                      ? "chat-me"
-                      : "chat-other"
-                  }`}
-                >
-                  {m.message}
-                  {m.senderId === userId && (
-                    <span
-                      style={{
-                        fontSize: 12,
-                        marginLeft: 6,
-                        opacity: 0.7,
-                      }}
-                    >
-                      {seen ? "✔✔" : "✔"}
-                    </span>
-                  )}
-                </div>
-              ))}
+          <div className="chat-messages">
+            {messages.map((m, i) => (
+              <div
+                key={i}
+                className={`chat-bubble ${
+                  m.senderId === userId
+                    ? "chat-me"
+                    : "chat-other"
+                }`}
+              >
+                {m.message}
+                {m.senderId === userId && (
+                  <span
+                    style={{
+                      marginLeft: 6,
+                      color:
+                        m.status === "seen"
+                          ? "dodgerblue"
+                          : "gray",
+                    }}
+                  >
+                    {m.status === "sent"
+                      ? "✔"
+                      : "✔✔"}
+                  </span>
+                )}
+              </div>
+            ))}
+            {isTyping && (
+              <div className="typing-indicator">
+                typing…
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
 
-              {isTyping && (
-                <div className="typing-indicator">
-                  typing…
-                </div>
-              )}
-
-              <div ref={messagesEndRef} />
-            </div>
-
-            <div className="chat-input">
-              <input
-                value={text}
-                onChange={(e) =>
-                  handleTyping(e.target.value)
-                }
-                placeholder="Type a message..."
-              />
-              <button onClick={sendMessage}>
-                Send
-              </button>
-            </div>
+          <div className="chat-input">
+            <input
+              value={text}
+              onChange={(e) =>
+                setText(e.target.value)
+              }
+              placeholder="Type a message..."
+            />
+            <button onClick={sendMessage}>
+              Send
+            </button>
           </div>
         </div>
       </div>

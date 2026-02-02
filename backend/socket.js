@@ -1,4 +1,5 @@
 let ioInstance;
+const Message = require("./Message");
 
 // online users map (userId -> socketId)
 const onlineUsers = new Map();
@@ -10,94 +11,94 @@ const initSocket = (io) => {
     console.log("🔌 Socket connected:", socket.id);
 
     // ===============================
-    // join user room + mark online
+    // join user room
     // ===============================
     socket.on("joinRoom", (userId) => {
       socket.join(userId);
       onlineUsers.set(userId, socket.id);
-
-      // send updated online users list
       io.emit("onlineUsers", Array.from(onlineUsers.keys()));
-
-      console.log(`👤 User online: ${userId}`);
     });
 
     // ===============================
-    // message delivered
+    // SEND MESSAGE
     // ===============================
-    socket.on("messageDelivered", ({ senderId }) => {
-      io.to(senderId).emit("messageDelivered");
+    socket.on(
+      "sendMessage",
+      async ({ senderId, receiverId, message }) => {
+        // 1️⃣ save (sent)
+        const msg = await Message.create({
+          senderId,
+          receiverId,
+          message,
+          status: "sent",
+        });
+
+        // 2️⃣ deliver if receiver online
+        const receiverSocket = onlineUsers.get(receiverId);
+        if (receiverSocket) {
+          io.to(receiverId).emit("receiveMessage", msg);
+
+          // 3️⃣ update to delivered
+          msg.status = "delivered";
+          await msg.save();
+
+          // 4️⃣ notify sender
+          io.to(senderId).emit("messageDelivered", {
+            messageId: msg._id,
+          });
+        }
+      }
+    );
+
+    // ===============================
+    // MESSAGE SEEN
+    // ===============================
+    socket.on(
+      "messageSeen",
+      async ({ messageId, senderId }) => {
+        await Message.findByIdAndUpdate(messageId, {
+          status: "seen",
+        });
+
+        io.to(senderId).emit("messageSeen", {
+          messageId,
+        });
+      }
+    );
+
+    // ===============================
+    // typing
+    // ===============================
+    socket.on("typing", ({ receiverId }) => {
+      io.to(receiverId).emit("typing");
+    });
+
+    socket.on("stopTyping", ({ receiverId }) => {
+      io.to(receiverId).emit("stopTyping");
     });
 
     // ===============================
-    // message seen
+    // disconnect
     // ===============================
-    socket.on("messageSeen", ({ senderId }) => {
-      io.to(senderId).emit("messageSeen");
-    });
-
-    // ===============================
-    // realtime chat message
-    // ===============================
-    socket.on("sendMessage", ({ senderId, receiverId, message }) => {
-      const chatPayload = {
-        senderId,
-        message,
-        createdAt: new Date(),
-      };
-
-      // send message
-      io.to(receiverId).emit("receiveMessage", chatPayload);
-
-      // send notification
-      io.to(receiverId).emit("notification", {
-        message: `💬 New message: ${message}`,
-        isRead: false,
-        createdAt: new Date(),
-      });
-    });
-
-    // ===============================
-    // typing indicator
-    // ===============================
-    socket.on("typing", ({ senderId, receiverId }) => {
-      io.to(receiverId).emit("typing", { senderId });
-    });
-
-    socket.on("stopTyping", ({ senderId, receiverId }) => {
-      io.to(receiverId).emit("stopTyping", { senderId });
-    });
-
-    
-    // disconnect → mark offline
-    
     socket.on("disconnect", () => {
-      for (const [userId, sockId] of onlineUsers.entries()) {
-        if (sockId === socket.id) {
-          onlineUsers.delete(userId);
-
-          // broadcast updated online list
-          io.emit("onlineUsers", Array.from(onlineUsers.keys()));
-
-          console.log(`🔴 User offline: ${userId}`);
+      for (const [uid, sid] of onlineUsers.entries()) {
+        if (sid === socket.id) {
+          onlineUsers.delete(uid);
+          io.emit(
+            "onlineUsers",
+            Array.from(onlineUsers.keys())
+          );
           break;
         }
       }
-
-      console.log("❌ Socket disconnected:", socket.id);
     });
   });
 };
 
-// existing helper (UNCHANGED)
-
-const sendNotification = (userId, notification) => {
+const sendNotification = (userId, payload) => {
   if (ioInstance) {
-    ioInstance.to(userId).emit("notification", notification);
+    ioInstance.to(userId).emit("notification", payload);
   }
 };
 
-module.exports = {
-  initSocket,
-  sendNotification,
-};
+module.exports = { initSocket, sendNotification };

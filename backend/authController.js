@@ -6,7 +6,7 @@ const { sendNotification } = require("./socket");
 
 /**
  * =========================
- * REGISTER USER
+ * REGISTER USER (AUTO LOGIN)
  * =========================
  */
 exports.registerUser = async (req, res) => {
@@ -31,27 +31,34 @@ exports.registerUser = async (req, res) => {
     // 3️⃣ Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 4️⃣ Create new user (schema aligned)
-    await User.create({
+    // 4️⃣ Create user
+    const user = await User.create({
       name,
       email,
       password: hashedPassword,
     });
 
-    // 5️⃣ Success response
+    // 5️⃣ Generate JWT token (AUTO LOGIN)
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    // 6️⃣ Send token to frontend
     res.status(201).json({
-      message: "User registered successfully",
+      token,
     });
 
-  }catch (error) {
-  console.error("🔥 REGISTER ERROR FULL 🔥", error);
-  console.error("STACK 👉", error.stack);
+  } catch (error) {
+    console.error("🔥 REGISTER ERROR FULL 🔥", error);
+    console.error("STACK 👉", error.stack);
 
-  res.status(500).json({
-    message: "Register error",
-    error: error.message,
-  });
-}
+    res.status(500).json({
+      message: "Register error",
+      error: error.message,
+    });
+  }
 };
 
 /**

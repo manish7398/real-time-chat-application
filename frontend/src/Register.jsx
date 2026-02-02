@@ -2,29 +2,33 @@ import { useState } from "react";
 import API from "./api";
 import "./App.css";
 
-function Login({ setToken, setShowRegister }) {
+function Register({ setToken, setShowRegister }) {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleLogin = async (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
-      const res = await API.post("/auth/login", {
+      const res = await API.post("/auth/register", {
+        name,
         email,
         password,
       });
 
-      // ✅ token auto store
+      // ✅ auto login after register
       localStorage.setItem("token", res.data.token);
       setToken(res.data.token);
     } catch (err) {
-      setError("Invalid email or password");
+      setError(
+        err.response?.data?.message ||
+          "Registration failed"
+      );
     } finally {
       setLoading(false);
     }
@@ -33,25 +37,38 @@ function Login({ setToken, setShowRegister }) {
   return (
     <div className="login-page">
       <div className="login-card">
-        <h2>Welcome Back</h2>
+        <h2>Create Account</h2>
         <p className="subtitle">
-          Login to <b>NotifyX</b>
+          Register to <b>NotifyX</b>
         </p>
 
-        <form onSubmit={handleLogin}>
+        <form onSubmit={handleRegister}>
+          <div className="input-group">
+            <input
+              required
+              value={name}
+              onChange={(e) =>
+                setName(e.target.value)
+              }
+            />
+            <label>Name</label>
+          </div>
+
           <div className="input-group">
             <input
               type="email"
               required
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) =>
+                setEmail(e.target.value)
+              }
             />
-            <label>Email Address</label>
+            <label>Email</label>
           </div>
 
           <div className="input-group">
             <input
-              type={show ? "text" : "password"}
+              type="password"
               required
               value={password}
               onChange={(e) =>
@@ -59,13 +76,6 @@ function Login({ setToken, setShowRegister }) {
               }
             />
             <label>Password</label>
-
-            <span
-              className="toggle"
-              onClick={() => setShow(!show)}
-            >
-              {show ? "🙈" : "👁️"}
-            </span>
           </div>
 
           {error && (
@@ -76,27 +86,20 @@ function Login({ setToken, setShowRegister }) {
             className="login-btn"
             disabled={loading}
           >
-            {loading ? "Logging in..." : "Login"}
+            {loading ? "Creating..." : "Register"}
           </button>
         </form>
 
-        {/* 🔹 REGISTER LINK */}
         <p
-          style={{
-            marginTop: 15,
-            cursor: "pointer",
-          }}
-          onClick={() => setShowRegister(true)}
+          style={{ marginTop: 15, cursor: "pointer" }}
+          onClick={() => setShowRegister(false)}
         >
-          New user? <b>Register here</b>
-        </p>
-
-        <p className="footer-text">
-          Secure • Fast • Realtime Notifications
+          Already have an account?{" "}
+          <b>Login</b>
         </p>
       </div>
     </div>
   );
 }
 
-export default Login;
+export default Register;
