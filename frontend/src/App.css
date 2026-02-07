@@ -702,3 +702,45 @@ body {
 .status-dot.offline {
   background: #ef4444;
 }
+.chat-top {
+  padding: 10px 16px;
+  background: rgba(255,255,255,0.08);
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+/* CHAT TOP BAR */
+.chat-top {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 12px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+}
+
+.chat-top-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+}
+
+.me-badge {
+  background: #22c55e;
+  color: black;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.arrow {
+  opacity: 0.8;
+  font-size: 16px;
+}
+
+.chatting-with {
+  font-weight: 700;
+}
+

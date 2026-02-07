@@ -1,8 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import socket, {
-  joinUserRoom,
-  sendChatMessage,
-} from "./socket";
+import socket, { joinUserRoom, sendChatMessage } from "./socket";
 import API from "./api";
 import { jwtDecode } from "jwt-decode";
 import "./App.css";
@@ -27,10 +24,13 @@ function Dashboard({ setToken }) {
   useEffect(() => {
     const fetchUsers = async () => {
       const res = await API.get("/users");
-      setUsers(res.data);
-      if (res.data[0]) {
-        setSelectedUser(res.data[0]);
-        loadChatHistory(res.data[0]._id);
+      const others = res.data.filter(
+        (u) => u._id !== userId
+      );
+      setUsers(others);
+      if (others[0]) {
+        setSelectedUser(others[0]);
+        loadChatHistory(others[0]._id);
       }
     };
     fetchUsers();
@@ -50,7 +50,6 @@ function Dashboard({ setToken }) {
     const res = await API.get(`/messages/${otherUserId}`);
     setMessages(res.data);
 
-    // 🔵 mark unseen messages as seen
     res.data.forEach((m) => {
       if (
         m.receiverId === userId &&
@@ -81,7 +80,6 @@ function Dashboard({ setToken }) {
       if (msg.senderId === selectedUser?._id) {
         setMessages((prev) => [...prev, msg]);
 
-        // mark seen immediately
         socket.emit("messageSeen", {
           messageId: msg._id,
           senderId: msg.senderId,
@@ -147,8 +145,13 @@ function Dashboard({ setToken }) {
     setToken(null);
   };
 
+  const isOnline =
+    selectedUser &&
+    onlineUsers.includes(selectedUser._id);
+
   return (
     <div className="dash-page">
+      {/* APP HEADER */}
       <div className="dash-header">
         <h2>NotifyX Chat</h2>
         <button onClick={logout}>Logout</button>
@@ -182,8 +185,22 @@ function Dashboard({ setToken }) {
           ))}
         </div>
 
-        {/* CHAT */}
+        {/* CHAT WINDOW */}
         <div className="chat-window">
+          {/* 🔵 CHAT HEADER (WHATSAPP STYLE) */}
+          {selectedUser && (
+            <div className="chat-top">
+              <strong>
+                Chatting with {selectedUser.name}
+              </strong>
+              <span
+                className={`status-dot ${
+                  isOnline ? "online" : "offline"
+                }`}
+              />
+            </div>
+          )}
+
           <div className="chat-messages">
             {messages.map((m, i) => (
               <div
@@ -226,7 +243,9 @@ function Dashboard({ setToken }) {
               onChange={(e) =>
                 setText(e.target.value)
               }
-              placeholder="Type a message..."
+              placeholder={`Message ${
+                selectedUser?.name || ""
+              }`}
             />
             <button onClick={sendMessage}>
               Send
@@ -239,4 +258,3 @@ function Dashboard({ setToken }) {
 }
 
 export default Dashboard;
-
