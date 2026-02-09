@@ -27,5 +27,4 @@ cd backend
 npm install
 npm run dev
 
-### Login Page
-![Login Page](https://github.com/username/repo/assets/597eb389-b25b-4c38-ae1d-a8f78a9feae0)
+
