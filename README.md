@@ -1,32 +1,28 @@
-# NotifyX Chat App 🚀
+# NotifyX – Real-Time Chat Application 🚀
 
-A real-time chat application built with:
+## 📌 Overview
+NotifyX is a real-time chat application built using MERN stack with Socket.IO.
 
-- React (Vite)
-- Node.js + Express
-- Socket.IO
-- MongoDB (Local)
-- JWT Authentication
-
-## Features
-- User Register & Login
-- Real-time 1-to-1 Chat
-- Online / Offline status
-- Message Delivered & Seen (✔✔)
+## ✨ Features
+- User Registration & Login
+- Real-time Messaging
+- Online / Offline Status
+- Message Delivered & Seen ✔✔
 - WhatsApp-style UI
 
-## Tech Stack
-Frontend: React, CSS  
-Backend: Node.js, Express  
-Database: MongoDB (Local)
+## 🛠 Tech Stack
+- Frontend: React (Vite)
+- Backend: Node.js, Express
+- Database: MongoDB (Local)
+- Realtime: Socket.IO
+- Auth: JWT
 
-## How to Run
+
+
+## ▶️ How to Run
 
 ### Backend
 ```bash
 cd backend
 npm install
-npm run dev 
-
-
-
+npm run dev
