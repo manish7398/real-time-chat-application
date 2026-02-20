@@ -17,7 +17,6 @@ NotifyX is a real-time chat application built using MERN stack with Socket.IO.
 - Realtime: Socket.IO
 - Auth: JWT
 
-<img width="833" height="800" alt="login page" src="https://github.com/user-attachments/assets/b472a4a6-6d8f-467d-8628-e8d60f203dfa" />
 
 
 ## ▶️ How to Run
